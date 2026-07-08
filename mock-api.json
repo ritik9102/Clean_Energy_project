@@ -1,0 +1,32 @@
+
+
+import { Order, PendingAction, OrderStatus } from '../types';
+
+const BASE_URL = process.env.API_BASE_URL || 'https://api.clearenergy.com/v1';
+
+// Shared base fetch wrapper handling global authentications or headers
+
+async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+  });
+  if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+  return response.json();
+}
+
+export const orderAPI = {
+  getOrders: () => apiFetch<Order[]>('/orders'),
+  getOrderById: (id: string) => apiFetch<Order>(`/orders/${id}`),
+  updateStatus: (id: string, status: OrderStatus) => 
+    apiFetch<Order>(`/orders/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+};
+
+export const adminAPI = {
+  getPendingActions: () => apiFetch<PendingAction[]>('/admin/actions'),
+  approveAction: (id: string) => 
+    apiFetch<{ success: boolean }>(`/admin/actions/${id}/approve`, { method: 'POST' }),
+};
