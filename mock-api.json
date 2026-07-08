@@ -1,32 +1,86 @@
-//
+
 
 import { Order, PendingAction, OrderStatus } from '../types';
 
 const BASE_URL = process.env.API_BASE_URL || 'https://api.clearenergy.com/v1';
 
-// Shared base fetch wrapper handling global authentications or headers
 
-async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+ // Custom error class to capture status codes and contextual details from failed API requests.
+
+export class APIError extends Error {
+  constructor(public status: number, message: string, public data?: any) {
+    super(message);
+    this.name = 'APIError';
+  }
+}
+
+ // Shared base fetch wrapper handling automatic header injection and robust error handling.
+ 
+async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(options.headers as Record<string, string>),
+  };
+
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers,
   });
-  if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+
+  // Handle non-2xx network/server responses safely
+
+  if (!response.ok) {
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = null;
+    }
+    throw new APIError(
+      response.status, 
+      errorData?.message || `API Network Error: ${response.statusText}`, 
+      errorData
+    );
+  }
+
+  // Handle empty or 204 No Content responses elegantly without crashing JSON parse
+
+  if (response.status === 204) {
+    return {} as T;
+  }
+
   return response.json();
 }
 
+
+ // Client interface for managing standard consumer and driver delivery orders.
+ 
 export const orderAPI = {
-  getOrders: () => apiFetch<Order[]>('/orders'),
-  getOrderById: (id: string) => apiFetch<Order>(`/orders/${id}`),
-  updateStatus: (id: string, status: OrderStatus) => 
-    apiFetch<Order>(`/orders/${id}/status`, {
+  getOrders: (): Promise<Order[]> => 
+    apiFetch<Order[]>('/orders'),
+
+  getOrderById: (id: string): Promise<Order> => 
+    apiFetch<Order>(`/orders/${encodeURIComponent(id)}`),
+
+  updateStatus: (id: string, status: OrderStatus): Promise<Order> => 
+    apiFetch<Order>(`/orders/${encodeURIComponent(id)}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
 };
 
+
+ Client interface for managing privileged administrator workflows and high-priority queues.
+
 export const adminAPI = {
-  getPendingActions: () => apiFetch<PendingAction[]>('/admin/actions'),
-  approveAction: (id: string) => 
-    apiFetch<{ success: boolean }>(`/admin/actions/${id}/approve`, { method: 'POST' }),
+  getPendingActions: (): Promise<PendingAction[]> => 
+    apiFetch<PendingAction[]>('/admin/actions'),
+
+  approveAction: (id: string): Promise<{ success: boolean }> => 
+    apiFetch<{ success: boolean }>(`/admin/actions/${encodeURIComponent(id)}/approve`, { 
+      method: 'POST' 
+    }),
 };
