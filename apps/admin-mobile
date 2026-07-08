@@ -1,0 +1,34 @@
+
+import React, { useEffect, useState } from 'react';
+import { adminAPI } from '@shared/api';
+import { PendingAction } from '@shared/types';
+
+export const AdminDashboard = () => {
+  const [actions, setActions] = useState<PendingAction[]>([]);
+
+  useEffect(() => {
+    adminAPI.getPendingActions().then(setActions).catch(console.error);
+  }, []);
+
+  const handleApproval = async (id: string) => {
+    const response = await adminAPI.approveAction(id);
+    if (response.success) {
+      setActions(prev => prev.filter(action => action.id !== id));
+    }
+  };
+
+  return (
+    <div>
+      <h1>Priority Action Pipeline</h1>
+      {actions
+        .sort((a, b) => (a.priority === 'HIGH' ? -1 : 1)) // Instant UI Sort
+        .map(action => (
+          <div key={action.id} className={`action-card ${action.priority.toLowerCase()}`}>
+            <span>[{action.priority}]</span>
+            <p>{action.description}</p>
+            <button onClick={() => handleApproval(action.id)}>Approve Request</button>
+          </div>
+        ))}
+    </div>
+  );
+};
