@@ -63,10 +63,6 @@ npm run admin
 
 
 
-## Time Spent
 
-Approximately **4 hours**.
 
-## Author
 
-**Ritik Kumar**
