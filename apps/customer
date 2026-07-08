@@ -1,0 +1,26 @@
+
+import React, { useEffect, useState } from 'react';
+import { orderAPI } from '@shared/api';
+import { formatPrice } from '@shared/utils';
+import { Order } from '@shared/types';
+
+export const CustomerOrdersScreen = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    orderAPI.getOrders().then(setOrders).catch(console.error);
+  }, []);
+
+  return (
+    <div>
+      <h1>Today's Orders</h1>
+      {orders.map(order => (
+        <div key={order.id} className="order-card">
+          <p>Status: {order.status}</p>
+          <p>ETA: {new Date(order.eta).toLocaleTimeString()}</p>
+          <p>Price: {formatPrice(order.price)}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
