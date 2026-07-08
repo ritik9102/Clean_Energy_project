@@ -1,0 +1,22 @@
+
+
+ Formats a raw number into a localized currency string.
+ Shared Requirement: Customer App (Price formatting)
+
+export const formatPrice = (amount: number, currency = 'USD'): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+  }).format(amount / 100); // Assuming amount is passed in cents
+};
+
+
+  Formats a remaining distance value into a readable string.
+ Shared Requirement: Driver App (Distance tracker)
+ 
+export const formatDistance = (meters: number, useMetric = true): string => {
+  if (useMetric) {
+    return `${(meters / 1000).toFixed(2)} km`;
+  }
+  return `${(meters * 0.000621371).toFixed(2)} miles`;
+};
