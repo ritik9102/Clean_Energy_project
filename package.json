@@ -1,5 +1,5 @@
 
-
+//
  Formats a raw number into a localized currency string.
  Shared Requirement: Customer App (Price formatting)
 
