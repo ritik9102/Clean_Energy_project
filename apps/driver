@@ -1,0 +1,29 @@
+
+import React, { useEffect, useState } from 'react';
+import { orderAPI } from '@shared/api';
+import { formatDistance } from '@shared/utils';
+import { Order } from '@shared/types';
+
+export const DriverTripScreen = () => {
+  const [trips, setTrips] = useState<Order[]>([]);
+
+  const handleStatusChange = async (id: string, nextStatus: 'EN_ROUTE' | 'DELIVERED') => {
+    const updated = await orderAPI.updateStatus(id, nextStatus);
+    setTrips(prev => prev.map(t => t.id === id ? updated : t));
+  };
+
+  return (
+    <div>
+      <h1>Today's Trips</h1>
+      {trips.map(trip => (
+        <div key={trip.id} className="trip-card">
+          <h3>Stops: {trip.deliveryStops.length} delivery locations</h3>
+          <p>Distance remaining: {formatDistance(4500)}</p> {/* Mock value passed to shared helper */}
+          <button onClick={() => handleStatusChange(trip.id, 'DELIVERED')}>
+            Mark as Delivered
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
