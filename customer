@@ -1,0 +1,28 @@
+
+
+export type OrderStatus = 'PENDING' | 'ACCEPTED' | 'EN_ROUTE' | 'DELIVERED' | 'CANCELLED';
+
+export interface Location {
+  latitude: number;
+  longitude: number;
+  address: string;
+}
+
+export interface Order {
+  id: string;
+  customerId: string;
+  driverId?: string;
+  status: OrderStatus;
+  price: number;        // Stored in lowest currency unit (e.g., cents/paise)
+  eta: string;          // ISO Timestamp
+  deliveryStops: Location[];
+  createdAt: string;
+}
+
+export interface PendingAction {
+  id: string;
+  type: 'REFUND_REQUEST' | 'DRIVER_VERIFICATION' | 'DISPUTE';
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  targetId: string;
+  description: string;
+}
